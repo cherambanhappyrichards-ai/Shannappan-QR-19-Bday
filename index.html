@@ -117,7 +117,7 @@
                     <span>Raise Shield to block attacks</span>
                 </div>
                 <div class="text-slate-400 text-xs mt-2 pt-2 border-t border-slate-700">
-                    Clear 3 waves (3, 6, 10 demons), find the randomly spawned North Star & Manger, and guide the Angel home! (Angel HP fully restores after every demon kill).
+                    Clear 3 slow waves (3, 6, 10 demons), find the randomly spawned North Star & Manger, and guide the Angel home! (Angel HP fully restores after every demon kill).
                 </div>
             </div>
 
@@ -145,7 +145,7 @@
 
             <div class="bg-amber-950/50 border border-amber-500/40 p-6 rounded-2xl mb-8 shadow-inner">
                 <p id="finalMessage" class="cinzel text-lg md:text-2xl font-bold text-amber-100 leading-relaxed glow-gold">
-                    "Happy Birthday Shannappa mwuthe,<br>I Love you dee chakkare,<br>UMMMMMMAAAAAA 🗡️🙇‍♂️"
+                    "Happy Birthday Shannappa mwuthe, <br>I Love you dee chakkare, <br>UMMMMMMAAAAAA 🗡️🙇‍♂️"
                 </p>
             </div>
 
@@ -700,23 +700,20 @@
             demons = [];
 
             let count = 0;
-            let speed = 1.2;
+            const slowSpeed = 1.1; // Slow speed for all three waves
 
             if (waveNum === 1) {
                 count = 3;
-                speed = 1.2; // slow paced (3 demons)
                 waveTitle.innerText = "WAVE 1 / 3";
                 waveDesc.innerText = "Defeat the slow demons (3 remaining)";
             } else if (waveNum === 2) {
                 count = 6;
-                speed = 1.7; // slow to medium paced (6 demons)
                 waveTitle.innerText = "WAVE 2 / 3";
-                waveDesc.innerText = "Defeat the rising horde (6 remaining)";
+                waveDesc.innerText = "Defeat the slow demons (6 remaining)";
             } else if (waveNum === 3) {
                 count = 10;
-                speed = 2.1; // same pace as wave 2 (10 demons)
                 waveTitle.innerText = "WAVE 3 / 3";
-                waveDesc.innerText = "Final Wave! Defeat all 10 demons";
+                waveDesc.innerText = "Final Wave! Defeat all 10 slow demons";
             }
 
             for (let i = 0; i < count; i++) {
@@ -728,7 +725,7 @@
                 x = Math.max(100, Math.min(WORLD_WIDTH - 100, x));
                 y = Math.max(100, Math.min(WORLD_HEIGHT - 100, y));
 
-                demons.push(new Demon(x, y, speed, waveNum));
+                demons.push(new Demon(x, y, slowSpeed, waveNum));
             }
         }
 
@@ -793,7 +790,7 @@
             if (currentWave === 1) {
                 waveDesc.innerText = `Defeat the slow demons (${demons.length} remaining)`;
             } else if (currentWave === 2) {
-                waveDesc.innerText = `Defeat the rising horde (${demons.length} remaining)`;
+                waveDesc.innerText = `Defeat the slow demons (${demons.length} remaining)`;
             } else if (currentWave === 3) {
                 waveDesc.innerText = `Final Wave! (${demons.length} remaining)`;
             }
