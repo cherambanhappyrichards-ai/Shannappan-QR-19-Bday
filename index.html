@@ -1,1 +1,972 @@
-<script>document.write(decodeURIComponent(location.hash.slice(1)))</script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Shannappan - My Angel's Crusade 🗡️🙇‍♂️</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            background: #0f172a;
+            overflow: hidden;
+        }
+        .cinzel {
+            font-family: 'Cinzel', serif;
+        }
+        .glow-gold {
+            text-shadow: 0 0 15px rgba(250, 204, 21, 0.8), 0 0 30px rgba(234, 179, 8, 0.6);
+        }
+        .glow-cyan {
+            text-shadow: 0 0 15px rgba(6, 182, 212, 0.8), 0 0 30px rgba(59, 130, 246, 0.6);
+        }
+        .glow-red {
+            text-shadow: 0 0 15px rgba(239, 68, 68, 0.8), 0 0 30px rgba(220, 38, 38, 0.6);
+        }
+    </style>
+</head>
+<body class="w-screen h-screen overflow-hidden relative">
+
+    <!-- Game Canvas -->
+    <canvas id="gameCanvas" class="absolute inset-0 w-full h-full block z-0"></canvas>
+
+    <!-- UI HUD Overlay -->
+    <div id="hud" class="absolute inset-0 z-10 pointer-events-none flex flex-col justify-between p-4 md:p-6 select-none hidden">
+        <!-- Top HUD -->
+        <div class="flex justify-between items-start w-full max-w-7xl mx-auto">
+            <!-- Player Health & Wave info -->
+            <div class="bg-slate-900/80 backdrop-blur-md border border-amber-500/30 rounded-2xl p-4 shadow-2xl pointer-events-auto flex flex-col gap-2 min-w-[220px]">
+                <div class="flex justify-between items-center">
+                    <span class="cinzel text-amber-300 font-bold text-sm tracking-wider">SHANNAPPAN</span>
+                    <span id="hpText" class="text-xs font-bold text-emerald-400">100/100</span>
+                </div>
+                <!-- Health Bar -->
+                <div class="w-full bg-slate-800 h-3 rounded-full overflow-hidden p-0.5 border border-slate-700">
+                    <div id="hpBar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-full transition-all duration-200" style="width: 100%;"></div>
+                </div>
+                <!-- Shield Status -->
+                <div class="flex justify-between items-center text-xs text-cyan-300 mt-1">
+                    <span>SHIELD STATUS:</span>
+                    <span id="shieldText" class="font-bold text-cyan-400">READY</span>
+                </div>
+            </div>
+
+            <!-- Wave & Objective Tracker -->
+            <div class="bg-slate-900/80 backdrop-blur-md border border-cyan-500/30 rounded-2xl px-6 py-3 shadow-2xl pointer-events-auto text-center">
+                <div id="waveTitle" class="cinzel text-cyan-300 font-extrabold text-lg tracking-widest">WAVE 1 / 3</div>
+                <div id="waveDesc" class="text-xs text-slate-300 mt-0.5">Defeat the demons (3 remaining)</div>
+            </div>
+        </div>
+
+        <!-- Bottom HUD / Mobile Controls Indicator -->
+        <div class="flex justify-between items-end w-full max-w-7xl mx-auto pb-4">
+            <!-- Mobile Virtual Joystick Area (Left) -->
+            <div id="virtualJoystickContainer" class="relative w-36 h-36 md:hidden pointer-events-auto opacity-70 hover:opacity-100 transition-opacity">
+                <div id="joystickBase" class="absolute inset-0 bg-slate-800/60 border-2 border-slate-600 rounded-full flex items-center justify-center">
+                    <div id="joystickStick" class="absolute w-14 h-14 bg-gradient-to-tr from-amber-500 to-yellow-300 rounded-full shadow-lg transform transition-transform duration-75"></div>
+                </div>
+            </div>
+
+            <!-- Mobile Action Buttons (Right) -->
+            <div class="flex gap-4 md:hidden pointer-events-auto">
+                <button id="mobileShieldBtn" class="w-20 h-20 bg-slate-800/80 border-2 border-cyan-500 rounded-full flex flex-col items-center justify-center text-cyan-300 shadow-xl active:bg-cyan-900/50">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                    <span class="text-[10px] font-bold mt-0.5">SHIELD</span>
+                </button>
+                <button id="mobileAttackBtn" class="w-20 h-20 bg-gradient-to-tr from-amber-600 to-yellow-500 border-2 border-yellow-200 rounded-full flex flex-col items-center justify-center text-slate-950 shadow-xl active:scale-95 transition-transform">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.5 9.5l-3 3m5-8l-9 9m-2 4l3-3m-3 3l-1.5 1.5M19 5l1.5-1.5"></path></svg>
+                    <span class="text-[10px] font-black mt-0.5">SWORD</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Start Menu Modal -->
+    <div id="startMenu" class="absolute inset-0 z-50 bg-slate-950/90 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center select-none">
+        <div class="max-w-xl w-full bg-slate-900/90 border border-amber-500/40 p-8 rounded-3xl shadow-2xl relative overflow-hidden">
+            <div class="absolute -top-12 -right-12 w-32 h-32 bg-amber-500/20 rounded-full blur-2xl"></div>
+            <div class="absolute -bottom-12 -left-12 w-32 h-32 bg-cyan-500/20 rounded-full blur-2xl"></div>
+
+            <div class="inline-block p-3 bg-amber-500/10 border border-amber-500/30 rounded-2xl mb-4 text-amber-300">
+                <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+            </div>
+
+            <h1 class="cinzel text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-400 to-amber-500 glow-gold mb-2">
+                My Angel's Crusade
+            </h1>
+            <p class="text-sm md:text-base text-slate-300 mb-6">
+                A Birthday Christmas Adventure
+            </p>
+
+            <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 mb-6 text-left text-xs md:text-sm text-slate-300 space-y-2">
+                <div class="font-bold text-amber-300 cinzel mb-1">MISSIONS & CONTROLS:</div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 bg-slate-700 rounded text-amber-400 font-mono">WASD / Arrow Keys</span>
+                    <span>Move Angel across map (2000x1500)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 bg-slate-700 rounded text-amber-400 font-mono">Spacebar / J</span>
+                    <span>Sword Attack (Each demon takes 2 strikes)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 bg-slate-700 rounded text-cyan-400 font-mono">Shift / K</span>
+                    <span>Raise Shield to block attacks</span>
+                </div>
+                <div class="text-slate-400 text-xs mt-2 pt-2 border-t border-slate-700">
+                    Clear 3 waves (3, 6, 10 demons), find the randomly spawned North Star & Manger, and guide the Angel home! (Angel HP fully restores after every demon kill).
+                </div>
+            </div>
+
+            <button id="startBtn" class="w-full py-4 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-600 hover:from-amber-400 hover:to-yellow-400 text-slate-950 cinzel font-black text-lg rounded-2xl shadow-xl transform hover:-translate-y-0.5 active:translate-y-0 transition-all">
+                BEGIN HOLY QUEST 🗡️✨
+            </button>
+        </div>
+    </div>
+
+    <!-- Victory Manger Ending Modal -->
+    <div id="mangerModal" class="absolute inset-0 z-50 bg-slate-950/95 backdrop-blur-2xl flex flex-col items-center justify-center p-6 text-center select-none hidden">
+        <div class="max-w-2xl w-full bg-gradient-to-b from-amber-950/40 via-slate-900/90 to-slate-900 border-2 border-amber-500/60 p-8 md:p-10 rounded-3xl shadow-2xl relative overflow-hidden">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(251,191,36,0.15),transparent_70%)] pointer-events-none"></div>
+
+            <div class="inline-flex p-4 bg-amber-500/20 border border-amber-500/50 rounded-full mb-4 text-amber-300 shadow-[0_0_30px_rgba(251,191,36,0.5)] animate-pulse">
+                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            </div>
+
+            <h2 class="cinzel text-2xl md:text-3xl font-black text-amber-200 mb-2 glow-gold">
+                The Sacred Manger Reached
+            </h2>
+            <p class="text-xs md:text-sm text-cyan-200 mb-6 font-mono tracking-widest uppercase">
+                Esho Appachan with you my dear wifey!
+            </p>
+
+            <div class="bg-amber-950/50 border border-amber-500/40 p-6 rounded-2xl mb-8 shadow-inner">
+                <p id="finalMessage" class="cinzel text-lg md:text-2xl font-bold text-amber-100 leading-relaxed glow-gold">
+                    "Happy Birthday Shannappa mwuthe,<br>I Love you dee chakkare,<br>UMMMMMMAAAAAA 🗡️🙇‍♂️"
+                </p>
+            </div>
+
+            <button id="restartBtn" class="px-8 py-3 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-slate-950 cinzel font-black text-base rounded-2xl shadow-xl transition-all transform hover:scale-105">
+                PLAY AGAIN ✨
+            </button>
+        </div>
+    </div>
+
+    <!-- Game Script -->
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // UI Elements
+        const startMenu = document.getElementById('startMenu');
+        const hud = document.getElementById('hud');
+        const startBtn = document.getElementById('startBtn');
+        const mangerModal = document.getElementById('mangerModal');
+        const restartBtn = document.getElementById('restartBtn');
+        const hpBar = document.getElementById('hpBar');
+        const hpText = document.getElementById('hpText');
+        const shieldText = document.getElementById('shieldText');
+        const waveTitle = document.getElementById('waveTitle');
+        const waveDesc = document.getElementById('waveDesc');
+
+        // Mobile Controls
+        const mobileShieldBtn = document.getElementById('mobileShieldBtn');
+        const mobileAttackBtn = document.getElementById('mobileAttackBtn');
+        const joystickContainer = document.getElementById('virtualJoystickContainer');
+        const joystickStick = document.getElementById('joystickStick');
+
+        // Game World Dimensions
+        const WORLD_WIDTH = 2000;
+        const WORLD_HEIGHT = 1500;
+
+        // Game States: 'START', 'PLAYING', 'VICTORY'
+        let gameState = 'START';
+
+        // Camera
+        const camera = {
+            x: 0,
+            y: 0,
+            width: window.innerWidth,
+            height: window.innerHeight
+        };
+
+        // Resize Canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            camera.width = window.innerWidth;
+            camera.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Input Management
+        const keys = {
+            w: false, a: false, s: false, d: false,
+            ArrowUp: false, ArrowLeft: false, ArrowDown: false, ArrowRight: false,
+            space: false, shift: false
+        };
+
+        let touchInput = {
+            dx: 0,
+            dy: 0,
+            attacking: false,
+            shielding: false
+        };
+
+        // Keyboard Event Listeners
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'w' || e.key === 'W') keys.w = true;
+            if (e.key === 'a' || e.key === 'A') keys.a = true;
+            if (e.key === 's' || e.key === 'S') keys.s = true;
+            if (e.key === 'd' || e.key === 'D') keys.d = true;
+            if (e.key === 'ArrowUp') keys.ArrowUp = true;
+            if (e.key === 'ArrowLeft') keys.ArrowLeft = true;
+            if (e.key === 'ArrowDown') keys.ArrowDown = true;
+            if (e.key === 'ArrowRight') keys.ArrowRight = true;
+            if (e.key === ' ' || e.key === 'j' || e.key === 'J') {
+                if (gameState === 'PLAYING') player.attack();
+            }
+            if (e.key === 'Shift' || e.key === 'k' || e.key === 'K') {
+                keys.shift = true;
+                player.shielding = true;
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'w' || e.key === 'W') keys.w = false;
+            if (e.key === 'a' || e.key === 'A') keys.a = false;
+            if (e.key === 's' || e.key === 'S') keys.s = false;
+            if (e.key === 'd' || e.key === 'D') keys.d = false;
+            if (e.key === 'ArrowUp') keys.ArrowUp = false;
+            if (e.key === 'ArrowLeft') keys.ArrowLeft = false;
+            if (e.key === 'ArrowDown') keys.ArrowDown = false;
+            if (e.key === 'ArrowRight') keys.ArrowRight = false;
+            if (e.key === 'Shift' || e.key === 'k' || e.key === 'K') {
+                keys.shift = false;
+                player.shielding = false;
+            }
+        });
+
+        // Mobile Virtual Joystick Touch Handling
+        let joystickActive = false;
+        let joystickCenter = { x: 0, y: 0 };
+        const maxDist = 45;
+
+        joystickContainer.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            joystickActive = true;
+            const rect = joystickContainer.getBoundingClientRect();
+            joystickCenter.x = rect.left + rect.width / 2;
+            joystickCenter.y = rect.top + rect.height / 2;
+            handleTouchMove(e.touches[0]);
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!joystickActive) return;
+            e.preventDefault();
+            for (let i = 0; i < e.touches.length; i++) {
+                const touch = e.touches[i];
+                const dx = touch.clientX - joystickCenter.x;
+                const dy = touch.clientY - joystickCenter.y;
+                if (Math.hypot(dx, dy) < 120) {
+                    handleTouchMove(touch);
+                }
+            }
+        }, { passive: false });
+
+        window.addEventListener('touchend', (e) => {
+            joystickActive = false;
+            touchInput.dx = 0;
+            touchInput.dy = 0;
+            joystickStick.style.transform = `translate(0px, 0px)`;
+        });
+
+        function handleTouchMove(touch) {
+            const dx = touch.clientX - joystickCenter.x;
+            const dy = touch.clientY - joystickCenter.y;
+            const dist = Math.hypot(dx, dy);
+            const angle = Math.atan2(dy, dx);
+            const clampedDist = Math.min(dist, maxDist);
+            
+            const stickX = Math.cos(angle) * clampedDist;
+            const stickY = Math.sin(angle) * clampedDist;
+            joystickStick.style.transform = `translate(${stickX}px, ${stickY}px)`;
+
+            touchInput.dx = stickX / maxDist;
+            touchInput.dy = stickY / maxDist;
+        }
+
+        mobileAttackBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState === 'PLAYING') player.attack();
+        });
+
+        mobileShieldBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            player.shielding = true;
+        });
+        mobileShieldBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            player.shielding = false;
+        });
+
+        // Snow Particles
+        const snowflakes = [];
+        for (let i = 0; i < 200; i++) {
+            snowflakes.push({
+                x: Math.random() * WORLD_WIDTH,
+                y: Math.random() * WORLD_HEIGHT,
+                radius: Math.random() * 2.5 + 1,
+                speedY: Math.random() * 1.5 + 0.8,
+                speedX: (Math.random() - 0.5) * 0.8,
+                opacity: Math.random() * 0.7 + 0.3
+            });
+        }
+
+        // Christmas Trees Placement
+        const trees = [
+            { x: 300, y: 300, size: 1 },
+            { x: 1700, y: 400, size: 1.2 },
+            { x: 500, y: 1200, size: 1.1 },
+            { x: 1500, y: 1100, size: 1.3 },
+            { x: 1000, y: 250, size: 0.9 },
+            { x: 1000, y: 1300, size: 1 },
+            { x: 200, y: 800, size: 1.2 },
+            { x: 1800, y: 850, size: 1 }
+        ];
+
+        // Player (Angel) Class
+        class Player {
+            constructor() {
+                this.x = WORLD_WIDTH / 2;
+                this.y = WORLD_HEIGHT / 2;
+                this.radius = 22;
+                this.speed = 4.5;
+                this.hp = 100;
+                this.maxHp = 100;
+                this.angle = 0;
+                this.shielding = false;
+                this.isAttacking = false;
+                this.attackCooldown = 0;
+                this.attackDuration = 0;
+                this.hitFlash = 0;
+            }
+
+            update() {
+                let vx = 0;
+                let vy = 0;
+
+                if (keys.w || keys.ArrowUp) vy -= 1;
+                if (keys.s || keys.ArrowDown) vy += 1;
+                if (keys.a || keys.ArrowLeft) vx -= 1;
+                if (keys.d || keys.ArrowRight) vx += 1;
+
+                if (touchInput.dx !== 0 || touchInput.dy !== 0) {
+                    vx = touchInput.dx;
+                    vy = touchInput.dy;
+                }
+
+                if (vx !== 0 && vy !== 0) {
+                    vx *= 0.7071;
+                    vy *= 0.7071;
+                }
+
+                this.x += vx * this.speed;
+                this.y += vy * this.speed;
+
+                // Boundaries
+                this.x = Math.max(this.radius, Math.min(WORLD_WIDTH - this.radius, this.x));
+                this.y = Math.max(this.radius, Math.min(WORLD_HEIGHT - this.radius, this.y));
+
+                if (vx !== 0 || vy !== 0) {
+                    this.angle = Math.atan2(vy, vx);
+                }
+
+                if (this.attackCooldown > 0) this.attackCooldown--;
+                if (this.attackDuration > 0) {
+                    this.attackDuration--;
+                    if (this.attackDuration === 0) this.isAttacking = false;
+                }
+                if (this.hitFlash > 0) this.hitFlash--;
+            }
+
+            attack() {
+                if (this.attackCooldown === 0 && !this.shielding) {
+                    this.isAttacking = true;
+                    this.attackDuration = 15;
+                    this.attackCooldown = 30;
+
+                    demons.forEach(demon => {
+                        const dist = Math.hypot(demon.x - this.x, demon.y - this.y);
+                        if (dist < 75) {
+                            demon.hp--;
+                            demon.hitFlash = 15;
+                            const ang = Math.atan2(demon.y - this.y, demon.x - this.x);
+                            demon.x += Math.cos(ang) * 35;
+                            demon.y += Math.sin(ang) * 35;
+
+                            if (demon.hp <= 0) {
+                                demon.dead = true;
+                                // Angel HP resets to 100 after every kill
+                                this.hp = 100;
+                            }
+                        }
+                    });
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                if (this.hitFlash > 0 && Math.floor(this.hitFlash / 3) % 2 === 0) {
+                    ctx.filter = 'brightness(200%) sepia(100%) hue-rotate(-50deg)';
+                }
+
+                const wingPhase = Date.now() / 150;
+                const wingOffset = Math.sin(wingPhase) * 12;
+
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.strokeStyle = '#e2e8f0';
+                ctx.lineWidth = 2;
+
+                // Left Wing
+                ctx.save();
+                ctx.rotate(-0.3 + wingOffset * 0.02);
+                ctx.beginPath();
+                ctx.ellipse(-18, -5, 22, 12, -0.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+
+                // Right Wing
+                ctx.save();
+                ctx.rotate(0.3 - wingOffset * 0.02);
+                ctx.beginPath();
+                ctx.ellipse(18, -5, 22, 12, 0.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                ctx.restore();
+
+                // Halo
+                ctx.beginPath();
+                ctx.ellipse(0, -32, 14, 6, 0, 0, Math.PI * 2);
+                ctx.strokeStyle = '#facc15';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = '#facc15';
+                ctx.shadowBlur = 15;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Body
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#f8fafc';
+                ctx.fill();
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius - 2, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(250, 204, 21, 0.2)';
+                ctx.fill();
+
+                // Sword
+                ctx.save();
+                ctx.rotate(this.angle);
+                if (this.isAttacking) {
+                    ctx.beginPath();
+                    ctx.arc(35, 0, 30, -Math.PI / 2, Math.PI / 2);
+                    ctx.strokeStyle = 'rgba(250, 204, 21, 0.8)';
+                    ctx.lineWidth = 6;
+                    ctx.stroke();
+                }
+                ctx.fillStyle = '#e2e8f0';
+                ctx.fillRect(10, -3, 28, 6);
+                ctx.fillStyle = '#facc15';
+                ctx.fillRect(8, -6, 4, 12);
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillRect(4, -2, 6, 4);
+                ctx.restore();
+
+                // Shield
+                if (this.shielding) {
+                    ctx.save();
+                    ctx.rotate(this.angle);
+                    ctx.beginPath();
+                    ctx.arc(22, 0, 18, -Math.PI / 2, Math.PI / 2, true);
+                    ctx.fillStyle = 'rgba(6, 182, 212, 0.4)';
+                    ctx.fill();
+                    ctx.strokeStyle = '#06b6d4';
+                    ctx.lineWidth = 3;
+                    ctx.shadowColor = '#06b6d4';
+                    ctx.shadowBlur = 15;
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // Demon Class (Takes exactly 2 strikes)
+        class Demon {
+            constructor(x, y, speed, waveNumber) {
+                this.x = x;
+                this.y = y;
+                this.radius = 20;
+                this.speed = speed;
+                this.hp = 2;
+                this.maxHp = 2;
+                this.dead = false;
+                this.hitFlash = 0;
+                this.waveNumber = waveNumber;
+            }
+
+            update(targetX, targetY) {
+                const angle = Math.atan2(targetY - this.y, targetX - this.x);
+                this.x += Math.cos(angle) * this.speed;
+                this.y += Math.sin(angle) * this.speed;
+
+                this.x = Math.max(this.radius, Math.min(WORLD_WIDTH - this.radius, this.x));
+                this.y = Math.max(this.radius, Math.min(WORLD_HEIGHT - this.radius, this.y));
+
+                if (this.hitFlash > 0) this.hitFlash--;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                if (this.hitFlash > 0 && Math.floor(this.hitFlash / 3) % 2 === 0) {
+                    ctx.filter = 'brightness(200%) sepia(100%) hue-rotate(90deg)';
+                }
+
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = '#7f1d1d';
+                ctx.fill();
+                ctx.strokeStyle = '#ef4444';
+                ctx.lineWidth = 2.5;
+                ctx.shadowColor = '#ef4444';
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                // Horns
+                ctx.fillStyle = '#18181b';
+                ctx.beginPath();
+                ctx.moveTo(-10, -15);
+                ctx.lineTo(-18, -28);
+                ctx.lineTo(-5, -18);
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(10, -15);
+                ctx.lineTo(18, -28);
+                ctx.lineTo(5, -18);
+                ctx.fill();
+
+                // Eyes
+                ctx.fillStyle = '#f87171';
+                ctx.beginPath();
+                ctx.arc(-6, -3, 3, 0, Math.PI * 2);
+                ctx.arc(6, -3, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Health Bar
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(-16, -32, 32, 5);
+                ctx.fillStyle = '#22c55e';
+                ctx.fillRect(-15, -31, (this.hp / this.maxHp) * 30, 3);
+
+                ctx.restore();
+            }
+        }
+
+        // North Star & Manger Class (Spawned at random direction/position)
+        class MangerStar {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 45;
+                this.pulse = 0;
+            }
+
+            update() {
+                this.pulse += 0.05;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                const scale = 1 + Math.sin(this.pulse) * 0.15;
+                ctx.scale(scale, scale);
+
+                // Star Glow
+                const grad = ctx.createRadialGradient(0, -60, 5, 0, -60, 70);
+                grad.addColorStop(0, 'rgba(253, 224, 71, 0.9)');
+                grad.addColorStop(0.5, 'rgba(234, 179, 8, 0.4)');
+                grad.addColorStop(1, 'transparent');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(0, -60, 70, 0, Math.PI * 2);
+                ctx.fill();
+
+                // North Star above Manger
+                ctx.fillStyle = '#fef08a';
+                ctx.strokeStyle = '#eab308';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (let i = 0; i < 8; i++) {
+                    const r = (i % 2 === 0) ? 28 : 12;
+                    const angle = (i * Math.PI) / 4;
+                    const px = Math.cos(angle) * r;
+                    const py = -60 + Math.sin(angle) * r;
+                    if (i === 0) ctx.moveTo(px, py);
+                    else ctx.lineTo(px, py);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Manger Structure (Stable / Wooden Shelter)
+                ctx.fillStyle = '#78350f';
+                ctx.fillRect(-45, -15, 90, 35); // back walls
+                ctx.fillStyle = '#451a03';
+                ctx.beginPath();
+                ctx.moveTo(-55, -15);
+                ctx.lineTo(0, -45);
+                ctx.lineTo(55, -15);
+                ctx.closePath();
+                ctx.fill(); // Roof
+
+                // Hay / Crib in center
+                ctx.fillStyle = '#d97706';
+                ctx.beginPath();
+                ctx.ellipse(0, 10, 25, 10, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Baby Jesus (Glow breathing animation)
+                const babyGlow = Math.sin(this.pulse * 2) * 0.3 + 0.7;
+                ctx.fillStyle = `rgba(254, 240, 138, ${babyGlow})`;
+                ctx.beginPath();
+                ctx.arc(0, 5, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fde047';
+                ctx.beginPath();
+                ctx.arc(0, 2, 5, 0, Math.PI * 2);
+                ctx.fill(); // head
+
+                // Mother Mary (Left) & Joseph (Right) animated gently
+                const figureSway = Math.sin(this.pulse) * 3;
+                
+                // Mary
+                ctx.fillStyle = '#0284c7'; // blue robe
+                ctx.beginPath();
+                ctx.arc(-18, 5 + figureSway * 0.5, 9, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fef08a';
+                ctx.beginPath();
+                ctx.arc(-18, -4 + figureSway * 0.5, 5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Joseph
+                ctx.fillStyle = '#b45309'; // brown robe
+                ctx.beginPath();
+                ctx.arc(18, 5 - figureSway * 0.5, 10, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fef08a';
+                ctx.beginPath();
+                ctx.arc(18, -5 - figureSway * 0.5, 5.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+            }
+        }
+
+        let player = new Player();
+        let demons = [];
+        let mangerStar = null;
+        let currentWave = 1;
+
+        function startWave(waveNum) {
+            currentWave = waveNum;
+            demons = [];
+
+            let count = 0;
+            let speed = 1.2;
+
+            if (waveNum === 1) {
+                count = 3;
+                speed = 1.2; // slow paced (3 demons)
+                waveTitle.innerText = "WAVE 1 / 3";
+                waveDesc.innerText = "Defeat the slow demons (3 remaining)";
+            } else if (waveNum === 2) {
+                count = 6;
+                speed = 1.7; // slow to medium paced (6 demons)
+                waveTitle.innerText = "WAVE 2 / 3";
+                waveDesc.innerText = "Defeat the rising horde (6 remaining)";
+            } else if (waveNum === 3) {
+                count = 10;
+                speed = 2.1; // same pace as wave 2 (10 demons)
+                waveTitle.innerText = "WAVE 3 / 3";
+                waveDesc.innerText = "Final Wave! Defeat all 10 demons";
+            }
+
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 600 + Math.random() * 300;
+                let x = WORLD_WIDTH / 2 + Math.cos(angle) * dist;
+                let y = WORLD_HEIGHT / 2 + Math.sin(angle) * dist;
+
+                x = Math.max(100, Math.min(WORLD_WIDTH - 100, x));
+                y = Math.max(100, Math.min(WORLD_HEIGHT - 100, y));
+
+                demons.push(new Demon(x, y, speed, waveNum));
+            }
+        }
+
+        function initGame() {
+            player = new Player();
+            currentWave = 1;
+            mangerStar = null;
+            startWave(1);
+            gameState = 'PLAYING';
+            startMenu.classList.add('hidden');
+            hud.classList.remove('hidden');
+            mangerModal.classList.add('hidden');
+        }
+
+        startBtn.addEventListener('click', initGame);
+        restartBtn.addEventListener('click', initGame);
+
+        function update() {
+            if (gameState !== 'PLAYING') return;
+
+            player.update();
+
+            camera.x = player.x - camera.width / 2;
+            camera.y = player.y - camera.height / 2;
+            camera.x = Math.max(0, Math.min(WORLD_WIDTH - camera.width, camera.x));
+            camera.y = Math.max(0, Math.min(WORLD_HEIGHT - camera.height, camera.y));
+
+            snowflakes.forEach(sf => {
+                sf.y += sf.speedY;
+                sf.x += sf.speedX;
+                if (sf.y > WORLD_HEIGHT) sf.y = 0;
+                if (sf.x > WORLD_WIDTH) sf.x = 0;
+                if (sf.x < 0) sf.x = WORLD_WIDTH;
+            });
+
+            demons.forEach(demon => {
+                demon.update(player.x, player.y);
+
+                const dist = Math.hypot(player.x - demon.x, player.y - demon.y);
+                if (dist < player.radius + demon.radius) {
+                    let dmg = 0.8;
+                    if (player.shielding) {
+                        const demonAngle = Math.atan2(demon.y - player.y, demon.x - player.x);
+                        const angleDiff = Math.abs(player.angle - demonAngle);
+                        if (angleDiff < Math.PI / 1.5) {
+                            dmg = 0.1;
+                        }
+                    }
+                    player.hp -= dmg;
+                    player.hitFlash = 10;
+                    if (player.hp <= 0) {
+                        // Game restarts to start screen if angel dies
+                        gameState = 'START';
+                        hud.classList.add('hidden');
+                        startMenu.classList.remove('hidden');
+                    }
+                }
+            });
+
+            demons = demons.filter(d => !d.dead);
+
+            if (currentWave === 1) {
+                waveDesc.innerText = `Defeat the slow demons (${demons.length} remaining)`;
+            } else if (currentWave === 2) {
+                waveDesc.innerText = `Defeat the rising horde (${demons.length} remaining)`;
+            } else if (currentWave === 3) {
+                waveDesc.innerText = `Final Wave! (${demons.length} remaining)`;
+            }
+
+            hpBar.style.width = `${Math.max(0, player.hp)}%`;
+            hpText.innerText = `${Math.ceil(player.hp)}/${player.maxHp}`;
+            shieldText.innerText = player.shielding ? "ACTIVE" : "READY";
+            shieldText.className = player.shielding ? "font-bold text-cyan-300 animate-pulse" : "font-bold text-cyan-400";
+
+            if (demons.length === 0) {
+                if (currentWave === 1) {
+                    startWave(2);
+                } else if (currentWave === 2) {
+                    startWave(3);
+                } else if (currentWave === 3 && !mangerStar) {
+                    // Spawn North Star & Manger at a RANDOM direction/position in the 2000x1500 map
+                    const randomX = 300 + Math.random() * (WORLD_WIDTH - 600);
+                    const randomY = 300 + Math.random() * (WORLD_HEIGHT - 600);
+                    mangerStar = new MangerStar(randomX, randomY);
+                    waveTitle.innerText = "QUEST COMPLETE!";
+                    waveDesc.innerText = "Follow the North Star to the Manger!";
+                }
+            }
+
+            if (mangerStar) {
+                mangerStar.update();
+                const starDist = Math.hypot(player.x - mangerStar.x, player.y - mangerStar.y);
+                if (starDist < player.radius + mangerStar.radius + 10) {
+                    gameState = 'VICTORY';
+                    hud.classList.add('hidden');
+                    mangerModal.classList.remove('hidden');
+                }
+            }
+        }
+
+        function drawWorldBackground() {
+            const bgGrad = ctx.createLinearGradient(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+            bgGrad.addColorStop(0, '#0f172a');
+            bgGrad.addColorStop(0.5, '#1e293b');
+            bgGrad.addColorStop(1, '#090d16');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+            ctx.beginPath();
+            ctx.arc(400, 400, 350, 0, Math.PI * 2);
+            ctx.arc(1600, 1000, 450, 0, Math.PI * 2);
+            ctx.arc(1200, 300, 300, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.lineWidth = 1;
+            for (let x = 0; x < WORLD_WIDTH; x += 200) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, WORLD_HEIGHT);
+                ctx.stroke();
+            }
+            for (let y = 0; y < WORLD_HEIGHT; y += 200) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(WORLD_WIDTH, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawChristmasTree(tree) {
+            ctx.save();
+            ctx.translate(tree.x, tree.y);
+            ctx.scale(tree.size, tree.size);
+
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(-8, 25, 16, 20);
+
+            ctx.fillStyle = '#065f46';
+            ctx.beginPath();
+            ctx.moveTo(0, -10);
+            ctx.lineTo(-45, 30);
+            ctx.lineTo(45, 30);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#f1f5f9';
+            ctx.beginPath();
+            ctx.moveTo(0, -10);
+            ctx.lineTo(-20, 10);
+            ctx.lineTo(20, 10);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#047857';
+            ctx.beginPath();
+            ctx.moveTo(0, -35);
+            ctx.lineTo(-35, 10);
+            ctx.lineTo(35, 10);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#f1f5f9';
+            ctx.beginPath();
+            ctx.moveTo(0, -35);
+            ctx.lineTo(-15, -15);
+            ctx.lineTo(15, -15);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#059669';
+            ctx.beginPath();
+            ctx.moveTo(0, -65);
+            ctx.lineTo(-25, -10);
+            ctx.lineTo(25, -10);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(0, -70, 6, 0, Math.PI * 2);
+            ctx.fill();
+
+            const time = Date.now() / 300;
+            const colors = ['#ef4444', '#38bdf8', '#facc15', '#ec4899', '#22c55e'];
+            const lights = [
+                {x: -15, y: 20}, {x: 10, y: 15}, {x: -5, y: 5},
+                {x: -20, y: -2}, {x: 15, y: 0}, {x: 0, y: -20},
+                {x: -10, y: -30}, {x: 8, y: -25}
+            ];
+
+            lights.forEach((l, idx) => {
+                ctx.fillStyle = colors[(idx + Math.floor(time)) % colors.length];
+                ctx.beginPath();
+                ctx.arc(l.x, l.y, 3.5, 0, Math.PI * 2);
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = 8;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            });
+
+            ctx.restore();
+        }
+
+        function drawSnowflakes() {
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            snowflakes.forEach(sf => {
+                ctx.beginPath();
+                ctx.arc(sf.x, sf.y, sf.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${sf.opacity})`;
+                ctx.fill();
+            });
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(-camera.x, -camera.y);
+
+            drawWorldBackground();
+            trees.forEach(tree => drawChristmasTree(tree));
+            if (mangerStar) mangerStar.draw();
+            demons.forEach(demon => demon.draw());
+            player.draw();
+            drawSnowflakes();
+
+            ctx.restore();
+        }
+
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
